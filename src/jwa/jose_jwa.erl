@@ -117,14 +117,16 @@ decrypt_private(CipherText, RSAPrivateKey=#'RSAPrivateKey'{}, Algorithm)
 	{Module, Options} = rsa_crypt(Algorithm),
 	Module:decrypt_private(CipherText, RSAPrivateKey, Options);
 decrypt_private(CipherText, PrivateKey, Options) ->
-	public_key:decrypt_private(CipherText, PrivateKey, Options).
+	Padding = proplists:get_value(rsa_padding, Options, rsa_pkcs1_padding),
+        public_key:pkcs_private_decrypt(CipherText, PrivateKey, Padding).
 
 encrypt_public(PlainText, RSAPublicKey=#'RSAPublicKey'{}, Algorithm)
 		when is_atom(Algorithm) ->
 	{Module, Options} = rsa_crypt(Algorithm),
 	Module:encrypt_public(PlainText, RSAPublicKey, Options);
 encrypt_public(PlainText, PublicKey, Options) ->
-	public_key:encrypt_public(PlainText, PublicKey, Options).
+	Padding = proplists:get_value(rsa_padding, Options, rsa_pkcs1_padding),
+    	public_key:pkcs_public_encrypt(PlainText, PublicKey, Padding).
 
 sign(Message, DigestType, RSAPrivateKey=#'RSAPrivateKey'{}, Padding)
 		when is_atom(Padding) ->
