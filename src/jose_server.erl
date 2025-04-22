@@ -834,45 +834,47 @@ has_block_cipher(Cipher, {Key, IV, AAD, PlainText}) ->
 has_rsa_crypt(Algorithm, future, _LegacyOptions, FutureOptions) ->
 	PlainText = << 0:8 >>,
 	PublicKey = rsa_public_key(),
-	case catch public_key:encrypt_public(PlainText, PublicKey, FutureOptions) of
+	Padding = proplists:get_value(rsa_padding, FutureOptions, rsa_pkcs1_padding),
+	case catch public_key:pkcs_public_encrypt(PlainText, PublicKey, Padding) of
 		CipherText when is_binary(CipherText) ->
-			PrivateKey = rsa_private_key(),
-			case catch public_key:decrypt_private(CipherText, PrivateKey, FutureOptions) of
-				PlainText ->
-					case catch public_key:decrypt_private(rsa_ciphertext(Algorithm), PrivateKey, FutureOptions) of
-						<<"ciphertext">> ->
-							{true, public_key, FutureOptions};
-						_ ->
-							false
-					end;
+		    PrivateKey = rsa_private_key(),
+		    case catch public_key:pkcs_private_decrypt(CipherText, PrivateKey, Padding) of
+			PlainText ->
+			    case catch public_key:pkcs_private_decrypt(rsa_ciphertext(Algorithm), PrivateKey, Padding) of
+				<<"ciphertext">> ->
+				    {true, public_key, FutureOptions};
 				_ ->
-					false
-			end;
+				    false
+			    end;
+			_ ->
+			    false
+		    end;
 		_ ->
-			false
+		    false
 	end;
 has_rsa_crypt(_Algorithm, legacy, notsup, _FutureOptions) ->
 	false;
 has_rsa_crypt(Algorithm, legacy, LegacyOptions, _FutureOptions) ->
 	PlainText = << 0:8 >>,
 	PublicKey = rsa_public_key(),
-	case catch public_key:encrypt_public(PlainText, PublicKey, LegacyOptions) of
+	Padding = proplists:get_value(rsa_padding, LegacyOptions, rsa_pkcs1_padding),
+	case catch public_key:pkcs_public_encrypt(PlainText, PublicKey, Padding) of
 		CipherText when is_binary(CipherText) ->
-			PrivateKey = rsa_private_key(),
-			case catch public_key:decrypt_private(CipherText, PrivateKey, LegacyOptions) of
-				PlainText ->
-					case catch public_key:decrypt_private(rsa_ciphertext(Algorithm), PrivateKey, LegacyOptions) of
-						<<"ciphertext">> ->
-							{true, public_key, LegacyOptions};
-						_ ->
-							false
-					end;
+		    PrivateKey = rsa_private_key(),
+		    case catch public_key:pkcs_private_decrypt(CipherText, PrivateKey, Padding) of
+			PlainText ->
+			    case catch public_key:pkcs_private_decrypt(rsa_ciphertext(Algorithm), PrivateKey, Padding) of
+				<<"ciphertext">> ->
+				    {true, public_key, LegacyOptions};
 				_ ->
-					false
-			end;
+				    false
+			    end;
+			_ ->
+			    false
+		    end;
 		_ ->
-			false
-	end.
+		    false
+		end.
 
 %% @private
 has_rsa_sign(Padding, future, DigestType) ->
